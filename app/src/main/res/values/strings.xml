@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Movie Lookup</string>
+    <string name="home">Home</string>
+    <string name="favorites">Favorites</string>
+    <string name="search_movies">Search movies…</string>
+    <string name="rating">Rating</string>
+    <string name="overview">Overview</string>
+    <string name="back">Back</string>
+</resources>

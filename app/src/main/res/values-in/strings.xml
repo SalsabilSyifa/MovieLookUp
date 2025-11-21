@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pencarian Film</string>
+    <string name="home">Beranda</string>
+    <string name="favorites">Favorit</string>
+    <string name="search_movies">Cari film…</string>
+    <string name="rating">Rating</string>
+    <string name="overview">Sinopsis</string>
+    <string name="back">Kembali</string>
+</resources>
