@@ -51,6 +51,8 @@ dependencies {
     kapt ("androidx.room:room-compiler:2.6.1")
     implementation ("androidx.room:room-ktx:2.6.1")
 
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
     implementation("androidx.navigation:navigation-compose:2.7.0")
     implementation("com.google.accompanist:accompanist-navigation-animation:0.32.0")
 }

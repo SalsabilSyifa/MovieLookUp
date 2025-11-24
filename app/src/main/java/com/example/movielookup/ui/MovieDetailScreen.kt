@@ -10,15 +10,24 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.compose.ui.res.stringResource
+import com.example.movielookup.R
+import com.example.movielookup.api.GoogleTranslateApi
 import com.example.movielookup.api.MovieDetailResponse
 
 @Composable
@@ -95,11 +104,10 @@ fun MovieDetailScreen(movie: MovieDetailResponse?, onBack: () -> Unit) {
                         style = MaterialTheme.typography.h5.copy(fontSize = 26.sp),
                         color = colors.onBackground
                     )
-
                     Spacer(Modifier.height(6.dp))
 
                     Text(
-                        text = "⭐ ${movie.vote_average}",
+                        text = stringResource(R.string.rating) + ": ⭐ ${movie.vote_average}",
                         color = colors.primary
                     )
                 }
@@ -129,11 +137,53 @@ fun MovieDetailScreen(movie: MovieDetailResponse?, onBack: () -> Unit) {
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = movie.overview,
-                modifier = Modifier.padding(16.dp),
-                color = colors.onBackground,
-                textAlign = TextAlign.Justify
+                text = stringResource(R.string.overview),
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier.padding(12.dp),
             )
+            var translated by remember { mutableStateOf<String?>(null) }
+            var isTranslating by remember { mutableStateOf(true) }
+
+
+            LaunchedEffect(movie.overview) {
+                try {
+                    val api = GoogleTranslateApi.create()
+                    val response = api.translate(
+                        source = "en",
+                        target = "id",
+                        text = movie.overview
+                    )
+
+                    val translatedText = (response[0] as List<*>)
+                        .joinToString("") { (it as List<*>)[0].toString() }
+
+                    translated = translatedText
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    translated = movie.overview
+                } finally {
+                    isTranslating = false   // <=== WAJIB ADA!
+                }
+            }
+
+            if (isTranslating) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                Text(
+                    text = translated ?: movie.overview,
+                    modifier = Modifier.padding(16.dp),
+                    textAlign = TextAlign.Justify
+                )
+            }
+
 
             Spacer(Modifier.height(40.dp))
         }

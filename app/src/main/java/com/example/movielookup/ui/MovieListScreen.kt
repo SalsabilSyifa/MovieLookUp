@@ -1,5 +1,6 @@
 package com.example.movielookup.ui
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,12 +20,19 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.movielookup.api.*
 import kotlinx.coroutines.launch
+import java.util.Locale
+import com.example.movielookup.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun MovieListScreen(onMovieClick: (Movie) -> Unit) {
@@ -88,96 +96,130 @@ fun MovieListUI(
     onMovieClick: (Movie) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
-
     val scrollState = rememberLazyListState()
 
     val filtered = movies.filter {
         it.title.contains(searchQuery, ignoreCase = true)
     }
 
-    // 🔥 AUTO LOAD PAGINATION SAAT SCROLL DEKAT BAGIAN BAWAH
+    // Auto paginate
     LaunchedEffect(scrollState.firstVisibleItemIndex, scrollState.layoutInfo.totalItemsCount) {
         val lastVisible = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-
-        if (lastVisible >= filtered.size - 4) {
-            loadNextPage()
-        }
+        if (lastVisible >= filtered.size - 4) loadNextPage()
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
 
-        // 🔍 SEARCH BOX
-        TextField(
+        // 🔍 Search Box Modern
+        androidx.compose.material.TextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search movies...") },
+            placeholder = { Text(text = stringResource(id = R.string.search_movies)) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(12.dp),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+            colors = androidx.compose.material.TextFieldDefaults.textFieldColors(
+                backgroundColor = Color(0xFF222222),
+                textColor = Color.White,
+                placeholderColor = Color.Gray,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            )
         )
 
-        LazyColumn(
-            state = scrollState,
-            modifier = Modifier.fillMaxSize()
-        ) {
+        LazyColumn(state = scrollState, modifier = Modifier.fillMaxSize()) {
+            items(filtered) { movie -> MovieItemCard(movie, db, onMovieClick) }
+        }
+    }
+}
 
-            items(filtered) { movie ->
+@Composable
+fun MovieItemCard(
+    movie: Movie,
+    db: AppDatabase,
+    onMovieClick: (Movie) -> Unit
+) {
+    var isFavorite by remember { mutableStateOf(false) }
+    var translated by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
-                var isFavorite by remember { mutableStateOf(false) }
+    // Cek favorit & Translate async
+    LaunchedEffect(movie.id) {
+        isFavorite = db.favoriteDao().isFavorite(movie.id)
 
-                // Cek favorit hanya saat movie.id berubah
-                LaunchedEffect(movie.id) {
-                    isFavorite = db.favoriteDao().isFavorite(movie.id)
-                }
+        try {
+            val api = GoogleTranslateApi.create()
+            val response = api.translate("en", "id", movie.overview)
+            translated = (response[0] as List<*>)
+                .joinToString("") { (it as List<*>)[0].toString() }
+        } catch (e: Exception) { translated = movie.overview }
+    }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onMovieClick(movie) }
-                        .padding(12.dp)
-                ) {
+    androidx.compose.material.Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .clickable { onMovieClick(movie) },
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+        elevation = 6.dp
+    ) {
+        Row(modifier = Modifier.padding(12.dp)) {
 
-                    AsyncImage(
-                        model = movie.fullPoster,
-                        contentDescription = null,
-                        modifier = Modifier.size(100.dp)
-                    )
+            AsyncImage(
+                model = movie.fullPoster,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(110.dp)
+                    .padding(4.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+            )
 
-                    Column(
-                        modifier = Modifier
-                            .padding(start = 16.dp)
-                            .weight(1f)
-                    ) {
-                        Text(movie.title)
-                        Text(
-                            text = "⭐ ${movie.vote_average}",
-                            style = MaterialTheme.typography.body2,
-                            color = Color(0xFFFFC107) // warna gold
-                        )
+            Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
 
-                        Text(movie.overview.take(100) + "…")
-                    }
+                // Judul
+                Text(
+                    text = movie.title,
+                    style = MaterialTheme.typography.h6,
+                    color = Color.White
+                )
 
-                    val scope = rememberCoroutineScope()
+                // Rating badge
+                Text(
+                    text = "★ ${movie.vote_average}",
+                    color = Color(0xFFFFD700),
+                    style = MaterialTheme.typography.subtitle2,
+                    modifier = Modifier.padding(top = 3.dp)
+                )
 
-                    Icon(
-                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clickable {
-                                scope.launch {
-                                    val fav = FavoriteMovie(movie.id, movie.title, movie.fullPoster, movie.vote_average)
-
-                                    if (isFavorite) db.favoriteDao().removeFavoriteById(movie.id)
-                                    else db.favoriteDao().addFavorite(fav)
-
-                                    isFavorite = !isFavorite
-                                }
-                            }
-                    )
-                }
+                // Overview
+                Text(
+                    text = (translated ?: movie.overview).take(100) + "…",
+                    textAlign = TextAlign.Start,
+                    lineHeight = 18.sp,
+                    modifier = Modifier.padding(top = 6.dp),
+                    color = Color.LightGray,
+                    fontSize = 13.sp
+                )
             }
+
+            // Favorite icon
+            Icon(
+                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = null,
+                tint = if (isFavorite) Color.Red else Color.LightGray,
+                modifier = Modifier
+                    .size(26.dp)
+                    .padding(start = 6.dp, top = 4.dp)
+                    .clickable {
+                        scope.launch {
+                            val fav = FavoriteMovie(movie.id, movie.title, movie.fullPoster, movie.vote_average)
+                            if (isFavorite) db.favoriteDao().removeFavoriteById(movie.id)
+                            else db.favoriteDao().addFavorite(fav)
+                            isFavorite = !isFavorite
+                        }
+                    }
+            )
         }
     }
 }

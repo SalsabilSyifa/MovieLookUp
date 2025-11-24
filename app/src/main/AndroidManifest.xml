@@ -4,7 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="MovieInfo"
+        android:label="MovieLookUp"
         android:theme="@style/Theme.Material3.DayNight">
 
         <activity

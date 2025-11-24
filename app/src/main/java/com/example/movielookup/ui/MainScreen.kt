@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -16,6 +17,9 @@ import com.example.movielookup.ui.FavoriteListScreen
 import com.example.movielookup.ui.MovieDetailScreen
 import com.example.movielookup.ui.MovieListScreen
 import com.google.accompanist.navigation.animation.*
+import com.example.movielookup.R
+import java.util.Locale
+
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -85,7 +89,8 @@ fun MainScreen() {
                 LaunchedEffect(movieId) {
                     movie.value = MovieApi.create().getMovieDetail(
                         movieId = movieId,
-                        apiKey = "70292e98aa75c36564677891a39355ac"
+                        apiKey = "70292e98aa75c36564677891a39355ac",
+                        language = Locale.getDefault().language
                     )
                 }
 
@@ -109,15 +114,15 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavigationItem(
             selected = currentRoute == "home",
             onClick = { navController.navigate("home") },
-            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-            label = { Text("Home") }
+            icon = { Icon(Icons.Default.Home, contentDescription = null) },
+            label = { Text(stringResource(id = R.string.home)) }
         )
 
         BottomNavigationItem(
             selected = currentRoute == "favorites",
             onClick = { navController.navigate("favorites") },
-            icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorite") },
-            label = { Text("Favorites") }
+            icon = { Icon(Icons.Default.Favorite, contentDescription = null) },
+            label = { Text(stringResource(id = R.string.favorites)) }
         )
     }
 }
