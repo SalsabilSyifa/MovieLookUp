@@ -1,3 +1,4 @@
+import android.R.attr.fontFamily
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
@@ -8,6 +9,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -20,51 +23,21 @@ import com.google.accompanist.navigation.animation.*
 import com.example.movielookup.R
 import java.util.Locale
 
-
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun MainScreen() {
-
     val navController = rememberNavController()
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
+        bottomBar = { BottomNavigationBar(navController) },
+        backgroundColor = MaterialTheme.colors.background
     ) { padding ->
 
         AnimatedNavHost(
             navController = navController,
             startDestination = "home",
-            modifier = Modifier.padding(padding),
-
-            enterTransition = {
-                slideInHorizontally(
-                    animationSpec = tween(400),
-                    initialOffsetX = { 1000 }
-                ) + fadeIn(tween(300))
-            },
-
-            exitTransition = {
-                slideOutHorizontally(
-                    animationSpec = tween(400),
-                    targetOffsetX = { -300 }
-                ) + fadeOut(tween(250))
-            },
-
-            popEnterTransition = {
-                slideInHorizontally(
-                    animationSpec = tween(400),
-                    initialOffsetX = { -1000 }
-                ) + fadeIn(tween(300))
-            },
-
-            popExitTransition = {
-                slideOutHorizontally(
-                    animationSpec = tween(400),
-                    targetOffsetX = { 300 }
-                ) + fadeOut(tween(250))
-            }
+            modifier = Modifier.padding(padding)
         ) {
-
             composable("home") {
                 MovieListScreen(
                     onMovieClick = { movie ->
@@ -105,24 +78,26 @@ fun MainScreen() {
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    val currentRoute =
-        navController.currentBackStackEntryAsState().value?.destination?.route
-
-    BottomNavigation {
-
+    BottomNavigation(backgroundColor = MaterialTheme.colors.surface) {
         BottomNavigationItem(
             selected = currentRoute == "home",
             onClick = { navController.navigate("home") },
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
-            label = { Text(stringResource(id = R.string.home)) }
+            label = { Text(stringResource(id = R.string.home))
+            },
+            selectedContentColor = MaterialTheme.colors.primary,
+            unselectedContentColor = MaterialTheme.colors.onBackground.copy(alpha = 0.6f)
         )
 
         BottomNavigationItem(
             selected = currentRoute == "favorites",
             onClick = { navController.navigate("favorites") },
             icon = { Icon(Icons.Default.Favorite, contentDescription = null) },
-            label = { Text(stringResource(id = R.string.favorites)) }
+            label = { Text(stringResource(id = R.string.favorites)) },
+            selectedContentColor = MaterialTheme.colors.primary,
+            unselectedContentColor = MaterialTheme.colors.onBackground.copy(alpha = 0.6f)
         )
     }
 }
